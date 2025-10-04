@@ -3,7 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from sqlmodel import Session, select
 from sqlalchemy.exc import *
-import uvicorn
 from models.db_models import User
 from models.http.request_models import *
 from models.http.response_models import *
@@ -11,19 +10,6 @@ from config import get_session, init_db
 from utils.security import *
 
 app = FastAPI()
-
-#for debugging
-origins = [
-    "http://localhost:5173" 
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,     
-    allow_credentials=True,
-    allow_methods=["*"],       
-    allow_headers=["*"],       
-)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -81,7 +67,3 @@ async def login(login: LoginRequest, session: Session = Depends(get_session)) ->
         raise HTTPException(500, "There was an error processing your request")
     except Exception as e:
         raise HTTPException(500, "There was an error processing your request")
-
-#for debugging
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
