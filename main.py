@@ -58,7 +58,7 @@ async def login(response: Response, login: LoginRequest, session: Session = Depe
             value=jwt,
             expires=expDate,
             path="/",
-            secure=False,
+            secure=True,
             httponly=True,
             samesite="lax"
         )
