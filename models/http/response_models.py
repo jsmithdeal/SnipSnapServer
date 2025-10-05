@@ -5,5 +5,4 @@ class UserResponse(UserBase):
 
 class AuthenticatedResponse(BaseModel):
     csfrToken: str
-    jwtToken: str
     user: UserResponse
