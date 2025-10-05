@@ -1,7 +1,7 @@
 import bcrypt
 import jwt
 import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from config import JWT_SECRET
 
 #Create password hash for storing in the DB
@@ -13,21 +13,18 @@ def hashPassword(password: str) -> bytes:
 def checkPassword(password: str, hashedPassword: str) -> bool:
     return bcrypt.checkpw(password.encode('utf-8'), hashedPassword.encode('utf-8'))
 
-#Issue cross site forgery request token
-def issueCSFR() -> str:
-    return str(uuid.uuid4())
-
-#Issue the JWT
-def issueJWT(csfrToken: str, userId: int, email: str) -> str:
-    payload = {
+#Issue new csfr and jwt tokens
+def issueTokens(userId: int, email: str, tokenExp: datetime) -> tuple:
+    csfrToken = str(uuid.uuid4())
+    jwtToken = jwt.encode({
         "userId": userId,
         "email": email,
         "iat": datetime.now(timezone.utc),
-        "exp": datetime.now(timezone.utc) + timedelta(hours=4),
+        "exp": tokenExp,
         "csfr": csfrToken
-    }
+    }, JWT_SECRET, "HS256")
 
-    return jwt.encode(payload, JWT_SECRET, "HS256")
+    return (csfrToken, jwtToken)
 
 #Authenticate user with JWT and claims
 def isAuthenticated(csfrToken: str, jwtToken: str) -> bool:

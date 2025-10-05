@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Depends, HTTPException
+from datetime import timedelta
+from fastapi import FastAPI, Depends, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from sqlmodel import Session, select
@@ -51,22 +52,33 @@ async def create_user(user: CreateUserRequest, session: Session = Depends(get_se
 
 #Login form endpoint
 @app.post('/login')
-async def login(login: LoginRequest, session: Session = Depends(get_session)) -> AuthenticatedResponse:
+async def login(response: Response, login: LoginRequest, session: Session = Depends(get_session)) -> AuthenticatedResponse:
     try:
         userInfo = session.exec(select(User).where(User.email == login.email)).first()
 
         if (userInfo == None or not checkPassword(login.password, userInfo.password)):
             raise HTTPException(401, "Invalid email or password")
 
-        csfr = issueCSFR()
-        jwt = issueJWT(csfr, userInfo.userid, userInfo.email)
+        expDate = datetime.now(timezone.utc) + timedelta(hours=4)
+        tokens = issueTokens(userInfo.userid, userInfo.email, expDate)
+        csfr = tokens[0]
+        jwt = tokens[1]
 
-        if ((csfr is None or not csfr) or (jwt is None or not jwt)):
+        if ((tokens is None or not csfr) or (jwt is None or not jwt)):
             raise HTTPException(500, "Failed to issue tokens")
         
+        response.set_cookie(
+            key="snipsnap-jwt",
+            value=jwt,
+            expires=expDate,
+            path="/",
+            secure=False,
+            httponly=True,
+            samesite="lax"
+        )
+
         return AuthenticatedResponse(
             csfrToken=csfr,
-            jwtToken=jwt,
             user=UserResponse(
                 userid=userInfo.userid, 
                 email=userInfo.email, 
