@@ -52,7 +52,7 @@ async def create_user(user: CreateUserRequest, session: Session = Depends(get_se
 
 #Login form endpoint
 @app.post('/login')
-async def login(response: Response, login: LoginRequest, session: Session = Depends(get_session)) -> AuthenticatedResponse:
+async def login(response: Response, login: LoginRequest, session: Session = Depends(get_session)) -> UserResponse:
     try:
         userInfo = session.exec(select(User).where(User.email == login.email)).first()
 
@@ -77,15 +77,22 @@ async def login(response: Response, login: LoginRequest, session: Session = Depe
             samesite="lax"
         )
 
-        return AuthenticatedResponse(
-            csfrToken=csfr,
-            user=UserResponse(
+        response.set_cookie(
+            key="snipsnap-csfr",
+            value=csfr,
+            expires=expDate,
+            path="/",
+            secure=False,
+            httponly=False,
+            samesite="lax"
+        )
+
+        return UserResponse(
                 userid=userInfo.userid, 
                 email=userInfo.email, 
                 firstname=userInfo.firstname, 
                 lastname=userInfo.lastname
             )
-        )
     except HTTPException as e:
         raise
     except SQLAlchemyError as e:
