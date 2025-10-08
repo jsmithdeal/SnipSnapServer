@@ -34,9 +34,11 @@ def isAuthenticated(csfrToken: str, jwtToken: str) -> bool:
         decodedJwt = jwt.decode(jwtToken, JWT_SECRET, "HS256")
         jCsfr = decodedJwt["csfr"]
         
-        if (jCsfr == csfrToken):
-            return True
-        else:
-            return False
+        return jCsfr == csfrToken
     except Exception as e:
         return False
+    
+#Decode jwt to get userId
+def getUserIdFromJwt(jwtToken: str):
+    decodedJwt = jwt.decode(jwtToken, JWT_SECRET, "HS256")
+    return decodedJwt["userId"]

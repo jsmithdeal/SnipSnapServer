@@ -1,5 +1,5 @@
 from datetime import timedelta
-from fastapi import FastAPI, Depends, HTTPException, Response
+from fastapi import Cookie, FastAPI, Depends, HTTPException, Response, Request
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from sqlmodel import Session, select
@@ -38,15 +38,15 @@ async def create_user(user: CreateUserRequest, session: Session = Depends(get_se
 
 #Login form endpoint
 @app.post('/login')
-async def login(response: Response, login: LoginRequest, session: Session = Depends(get_session)) -> UserResponse:
+async def login(response: Response, login: LoginRequest, session: Session = Depends(get_session)):
     try:
-        userInfo = session.exec(select(User).where(User.email == login.email)).first()
+        user = session.exec(select(User).where(User.email == login.email)).first()
 
-        if (userInfo == None or not checkPassword(login.password, userInfo.password)):
+        if (user is None or not checkPassword(login.password, user.password)):
             raise HTTPException(401, "Invalid email or password")
 
         expDate = datetime.now(timezone.utc) + timedelta(hours=4)
-        tokens = issueTokens(userInfo.userid, userInfo.email, expDate)
+        tokens = issueTokens(user.userid, user.email, expDate)
         csfr = tokens[0]
         jwt = tokens[1]
 
@@ -54,7 +54,7 @@ async def login(response: Response, login: LoginRequest, session: Session = Depe
             raise HTTPException(500, "Failed to issue tokens")
         
         response.set_cookie(
-            key="snipsnap-jwt",
+            key="snipsnap_jwt",
             value=jwt,
             expires=expDate,
             path="/",
@@ -64,7 +64,7 @@ async def login(response: Response, login: LoginRequest, session: Session = Depe
         )
 
         response.set_cookie(
-            key="snipsnap-csfr",
+            key="snipsnap_csfr",
             value=csfr,
             expires=expDate,
             path="/",
@@ -72,13 +72,21 @@ async def login(response: Response, login: LoginRequest, session: Session = Depe
             httponly=False,
             samesite="lax"
         )
+    except HTTPException as e:
+        raise
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(500, "There was an error processing your request")
+    except Exception as e:
+        raise HTTPException(500, "There was an error processing your request")
 
-        return UserResponse(
-                userid=userInfo.userid, 
-                email=userInfo.email, 
-                firstname=userInfo.firstname, 
-                lastname=userInfo.lastname
-            )
+@app.post('/checkAuth')
+async def checkAuth(request: Request, session: Session = Depends(get_session), snipsnap_jwt: str = Cookie(None)):
+    try:
+        csfr = request.headers.get("snipsnap_csfr")
+
+        if (not isAuthenticated(csfr, snipsnap_jwt)):
+            raise HTTPException(401, "Unauthorized")
     except HTTPException as e:
         raise
     except SQLAlchemyError as e:
