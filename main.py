@@ -94,6 +94,31 @@ async def login(response: Response, login: LoginRequest, session: Session = Depe
     except Exception as e:
         raise HTTPException(500, "There was an error processing your request")
 
+@app.post("/logout")
+async def logout(response: Response):
+    try:
+        response.set_cookie(
+            key="snipsnap_jwt",
+            expires=0,
+            path="/",
+            secure=False,
+            httponly=True,
+            samesite="lax"
+        )
+
+        response.set_cookie(
+            key="snipsnap_csfr",
+            expires=0,
+            path="/",
+            secure=False,
+            httponly=False,
+            samesite="lax"
+        )
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        raise HTTPException(500, "There was an error processing your request")
+
 @app.post('/checkAuth')
 async def checkAuth(request: Request, session: Session = Depends(get_session), snipsnap_jwt: str = Cookie(None)):
     try:
