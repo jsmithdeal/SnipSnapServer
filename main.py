@@ -2,9 +2,9 @@ from datetime import timedelta
 from fastapi import Cookie, FastAPI, Depends, HTTPException, Response, Request
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from sqlmodel import Session, select
+from sqlmodel import Session, exists, select
 from sqlalchemy.exc import *
-from models.db_models import User
+from models.db_models import Shared, Snip, User
 from models.http.request_models import *
 from models.http.response_models import *
 from config import get_session, init_db
@@ -105,8 +105,38 @@ async def logout(response: Response):
     except Exception as e:
         raise HTTPException(500, "There was an error processing your request")
 
+#Get list of snips for user
+@app.get("/getSnips", response_model=List[SnipsRequest])
+async def getSnips(request: Request, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)) -> List[SnipsRequest]:
+    try:
+        csfr = request.headers.get("snipsnap_csfr")
+
+        if (not isAuthenticated(csfr, snipsnap_jwt)):
+            raise HTTPException(401, "Unauthorized")
+        
+        userid = getUserIdFromJwt(snipsnap_jwt)
+
+        subQ = select(exists().where(Snip.snipid == Shared.snipid and Snip.userid == Shared.userid)).scalar_subquery()
+        snips = session.exec(select(
+            Snip.snipid, 
+            Snip.sniplanguage, 
+            Snip.snipname, 
+            Snip.snipdescription, 
+            Snip.lastmodified,
+            subQ.label("snipshared")
+        ).where(Snip.userid == userid)).all()
+
+        return snips
+    except HTTPException as e:
+        raise
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(500, "There was an error processing your request")
+    except Exception as e:
+        raise HTTPException(500, "There was an error processing your request")
+
 @app.post('/checkAuth')
-async def checkAuth(request: Request, session: Session = Depends(get_session), snipsnap_jwt: str = Cookie(None)):
+async def checkAuth(request: Request, snipsnap_jwt: str = Cookie(None)):
     try:
         csfr = request.headers.get("snipsnap_csfr")
 
@@ -114,8 +144,5 @@ async def checkAuth(request: Request, session: Session = Depends(get_session), s
             raise HTTPException(401, "Unauthorized")
     except HTTPException as e:
         raise
-    except SQLAlchemyError as e:
-        session.rollback()
-        raise HTTPException(500, "There was an error processing your request")
     except Exception as e:
         raise HTTPException(500, "There was an error processing your request")
