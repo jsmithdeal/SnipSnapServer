@@ -2,11 +2,11 @@ from datetime import timedelta
 from fastapi import Cookie, FastAPI, Depends, HTTPException, Response, Request
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from sqlmodel import Session, exists, select
+from sqlmodel import Session, exists, select, update, delete
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy.orm import selectinload
 import uvicorn
-from models.db_models import Shared, Snip, User
+from models.db_models import Contact, Shared, Snip, User
 from models.http.request_models import *
 from models.http.response_models import *
 from config import get_session, init_db
@@ -184,6 +184,114 @@ async def checkAuth(request: Request, snipsnap_jwt: str = Cookie(None)):
             raise HTTPException(401, "Unauthorized")
     except HTTPException as e:
         raise
+    except Exception as e:
+        raise HTTPException(500, "There was an error processing your request")
+
+@app.patch('/saveUserInfo')
+async def saveUserInfo(request: Request, updateReq: UpdateUserRequest, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)):
+    try:
+        csfr = request.headers.get("snipsnap_csfr")
+
+        if (not isAuthenticated(csfr, snipsnap_jwt)):
+            raise HTTPException(401, "Unauthorized")
+        
+        userid = getUserIdFromJwt(snipsnap_jwt)
+        session.exec(update(User).where(User.userid == userid).values(email=updateReq.email, firstname=updateReq.firstname, lastname=updateReq.lastname))
+        session.commit()
+    except HTTPException as e:
+        raise
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(500, "There was an error processing your request")
+    except Exception as e:
+        raise HTTPException(500, "There was an error processing your request")
+
+@app.delete('/deleteAccount')
+async def deleteAccount(response: Response, request: Request, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)):
+    try:
+        csfr = request.headers.get("snipsnap_csfr")
+
+        if (not isAuthenticated(csfr, snipsnap_jwt)):
+            raise HTTPException(401, "Unauthorized")
+        
+        userid = getUserIdFromJwt(snipsnap_jwt)
+        session.exec(delete(User).where(User.userid == userid))
+        session.commit()
+
+        response.set_cookie(
+            key="snipsnap_jwt",
+            expires=0,
+            path="/",
+            secure=False,
+            httponly=True,
+            samesite="lax"
+        )
+
+        response.set_cookie(
+            key="snipsnap_csfr",
+            expires=0,
+            path="/",
+            secure=False,
+            httponly=False,
+            samesite="lax"
+        )
+    except HTTPException as e:
+        raise
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(500, "There was an error processing your request")
+    except Exception as e:
+        raise HTTPException(500, "There was an error processing your request")
+    
+@app.delete('/deleteContact/{contactId}')
+async def deleteContact(request: Request, contactId: int, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)):
+    try:
+        csfr = request.headers.get("snipsnap_csfr")
+
+        if (not isAuthenticated(csfr, snipsnap_jwt)):
+            raise HTTPException(401, "Unauthorized")
+        
+        userid = getUserIdFromJwt(snipsnap_jwt)
+        session.exec(delete(Contact).where(Contact.userid == userid and Contact.contactid == contactId))
+        session.commit()
+    except HTTPException as e:
+        raise
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(500, "There was an error processing your request")
+    except Exception as e:
+        raise HTTPException(500, "There was an error processing your request")
+    
+@app.post('/createContact')
+async def createContact(request: Request, contactReq: CreateContactRequest, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)) -> int:
+    try:
+        csfr = request.headers.get("snipsnap_csfr")
+
+        if (not isAuthenticated(csfr, snipsnap_jwt)):
+            raise HTTPException(401, "Unauthorized")
+        
+        userid = getUserIdFromJwt(snipsnap_jwt)
+        contactId = session.exec(select(User.userid).where(User.email == contactReq.email)).first()
+
+        if (contactId is not None):
+            contact = Contact(**contactReq.model_dump())
+            contact.userid = userid
+            contact.contactid = contactId
+            session.add(contact)
+            session.commit()
+            session.refresh(contact)
+            return contact.contactid
+        else:
+            raise HTTPException(404, "No users found with this email address")
+    except HTTPException as e:
+        raise
+    except SQLAlchemyError as e:
+        session.rollback()
+
+        if isinstance(e, IntegrityError):
+            raise HTTPException(409, "This user is already one of your contacts")
+        else:
+            raise HTTPException(500, "There was an error processing your request")
     except Exception as e:
         raise HTTPException(500, "There was an error processing your request")
 
