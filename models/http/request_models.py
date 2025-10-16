@@ -6,6 +6,3 @@ class CreateUserRequest(UserBase):
 class LoginRequest(SQLModel):
     email: str
     password: str
-
-class SnipsRequest(SnipBase):
-    pass
