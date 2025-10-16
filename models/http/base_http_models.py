@@ -6,6 +6,11 @@ class UserBase(SQLModel):
     firstname: str
     lastname: str
 
+class ContactsBase(SQLModel):
+    userid: int
+    contactid: int
+    displayname: str
+
 class SnipBase(SQLModel):
     snipid: int
     snipname: str
