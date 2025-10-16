@@ -6,3 +6,10 @@ class CreateUserRequest(UserBase):
 class LoginRequest(SQLModel):
     email: str
     password: str
+
+class UpdateUserRequest(UserBase):
+    pass
+
+class CreateContactRequest(SQLModel):
+    email: str
+    displayname: str
