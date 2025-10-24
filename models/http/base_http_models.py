@@ -11,6 +11,9 @@ class ContactsBase(SQLModel):
     contactid: int
     displayname: str
 
+class CollectionBase(SQLModel):
+    collectionname: str
+
 class SnipBase(SQLModel):
     snipid: int
     snipname: str

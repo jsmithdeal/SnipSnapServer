@@ -14,6 +14,8 @@ class User(SQLModel, table=True):
 
     #Non-column ORM relationships
     contacts: List["Contact"] = Relationship(back_populates="user", sa_relationship_kwargs={"foreign_keys": "Contact.userid"})
+    collections: List["Collection"] = Relationship(back_populates="user", sa_relationship_kwargs={"foreign_keys": "Collection.userid"})
+    snips: List["Snip"] = Relationship(back_populates="user", sa_relationship_kwargs={"foreign_keys": "Snip.userid"})
 
 class Collection(SQLModel, table=True):
     __tablename__ = "collections"
@@ -22,6 +24,9 @@ class Collection(SQLModel, table=True):
     collectionname: str
     createdon: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     lastmodified: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    #Non-column ORM relationships
+    user: User = Relationship(back_populates="collections", sa_relationship_kwargs={"foreign_keys": "Collection.userid"})
 
 class Snip(SQLModel, table=True):
     __tablename__ = "snips"
@@ -34,6 +39,10 @@ class Snip(SQLModel, table=True):
     snipcontent: str
     createdon: datetime = Field(default_factory=lambda: datetime.now(timezone.utc)) 
     lastmodified: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    #Non-column ORM relationships
+    user: User = Relationship(back_populates="snips", sa_relationship_kwargs={"foreign_keys": "Snip.userid"})
+    sharedwith: List["Shared"] = Relationship(back_populates="snip", sa_relationship_kwargs={"foreign_keys": "Shared.snipid"})
 
 class Contact(SQLModel, table=True):
     __tablename__ = "contacts"
@@ -59,3 +68,6 @@ class Shared(SQLModel, table=True):
     snipid: int = Field(foreign_key="snips.snipid")
     userid: int
     contactid: int
+
+    #Non-column ORM relationships
+    snip: Snip = Relationship(back_populates="sharedwith", sa_relationship_kwargs={"foreign_keys": "Shared.snipid"})

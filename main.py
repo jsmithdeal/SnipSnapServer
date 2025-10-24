@@ -22,6 +22,7 @@ async def lifespan(app: FastAPI):
 @app.post('/create-user')
 async def create_user(user: CreateUserRequest, session: Session = Depends(get_session)):
     try:
+        #Dump user to model, reset password to hashed version, and insert to db
         user = User(**user.model_dump())
         user.password = hashPassword(user.password)
         session.add(user)
@@ -41,11 +42,14 @@ async def create_user(user: CreateUserRequest, session: Session = Depends(get_se
 @app.post('/login')
 async def login(response: Response, login: LoginRequest, session: Session = Depends(get_session)):
     try:
+        #Check user with email exists
         user = session.exec(select(User).where(User.email == login.email)).first()
 
+        #Check password is correct for user
         if (user is None or not checkPassword(login.password, user.password)):
             raise HTTPException(401, "Invalid email or password")
 
+        #If validated, issue tokens and return to client
         expDate = datetime.now(timezone.utc) + timedelta(hours=4)
         tokens = issueTokens(user.userid, user.email, expDate)
         csfr = tokens[0]
@@ -81,6 +85,7 @@ async def login(response: Response, login: LoginRequest, session: Session = Depe
     except Exception as e:
         raise HTTPException(500, "There was an error processing your request")
 
+#Log the user out by expiring tokens
 @app.post("/logout")
 async def logout(response: Response):
     try:
@@ -136,6 +141,7 @@ async def getSnips(request: Request, snipsnap_jwt: str = Cookie(None), session: 
     except Exception as e:
         raise HTTPException(500, "There was an error processing your request")
 
+#Get the object to populate the settings page
 @app.get('/getSettings', response_model=SettingsResponse)
 async def getSettings(request: Request, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)) -> SettingsResponse:
     try:
@@ -145,7 +151,7 @@ async def getSettings(request: Request, snipsnap_jwt: str = Cookie(None), sessio
             raise HTTPException(401, "Unauthorized")
         
         userid = getUserIdFromJwt(snipsnap_jwt)
-        settings = session.exec(select(User).where(User.userid == userid).options(selectinload(User.contacts))).first()
+        settings = session.exec(select(User).where(User.userid == userid).options(selectinload(User.contacts))).first() #selectinload gets the contacts for this user as defined in db model relationships
 
         return SettingsResponse(
             email=settings.email,
@@ -161,6 +167,43 @@ async def getSettings(request: Request, snipsnap_jwt: str = Cookie(None), sessio
     except Exception as e:
         raise HTTPException(500, "There was an error processing your request")
 
+#Get details about a snip
+@app.get('/getSnipDetails', response_model=SnipDetailsResponse)
+async def getSnipDetails(request: Request, snipId: int, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)) -> SnipDetailsResponse:
+    try:
+        csfr = request.headers.get("snipsnap_csfr")
+
+        if (not isAuthenticated(csfr, snipsnap_jwt)):
+            raise HTTPException(401, "Unauthorized")
+        
+        snipDetails = session.exec(select(Snip)
+                                .where(Snip.snipid == snipId)
+                                .options(
+                                    selectinload(Snip.sharedwith),
+                                    selectinload(Snip.user).selectinload(User.collections),
+                                    selectinload(Snip.user).selectinload(User.contacts) #selectinload gets attributes for this snip and user as defined in db model relationships
+                                )).first()
+
+        return SnipDetailsResponse(
+            snipid=snipDetails.snipid,
+            snipname=snipDetails.snipname,
+            snipdescription=snipDetails.snipdescription,
+            sniplanguage=snipDetails.sniplanguage,
+            lastmodified=snipDetails.lastmodified,
+            snipshared=(True if len(snipDetails.sharedwith) > 0 else False),
+            collections=snipDetails.user.collections,
+            contacts=snipDetails.user.contacts,
+            sharedwith=[c.contactid for c in snipDetails.sharedwith]
+        )
+    except HTTPException as e:
+        raise
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(500, "There was an error processing your request")
+    except Exception as e:
+        raise HTTPException(500, "There was an error processing your request")
+
+#Check the validity of the jwt token and ensure the csfr token matches what is encoded in the jwt
 @app.post('/checkAuth')
 async def checkAuth(request: Request, snipsnap_jwt: str = Cookie(None)):
     try:
@@ -173,6 +216,7 @@ async def checkAuth(request: Request, snipsnap_jwt: str = Cookie(None)):
     except Exception as e:
         raise HTTPException(500, "There was an error processing your request")
 
+#Save user info editable on the settings page
 @app.patch('/saveUserInfo')
 async def saveUserInfo(request: Request, updateReq: UpdateUserRequest, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)):
     try:
@@ -192,6 +236,7 @@ async def saveUserInfo(request: Request, updateReq: UpdateUserRequest, snipsnap_
     except Exception as e:
         raise HTTPException(500, "There was an error processing your request")
 
+#Delete the account. Unvalidates tokens to ensure logout on delete
 @app.delete('/deleteAccount')
 async def deleteAccount(response: Response, request: Request, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)):
     try:
@@ -229,6 +274,7 @@ async def deleteAccount(response: Response, request: Request, snipsnap_jwt: str 
     except Exception as e:
         raise HTTPException(500, "There was an error processing your request")
     
+#Delete a contact
 @app.delete('/deleteContact/{contactId}')
 async def deleteContact(request: Request, contactId: int, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)):
     try:
@@ -247,7 +293,8 @@ async def deleteContact(request: Request, contactId: int, snipsnap_jwt: str = Co
         raise HTTPException(500, "There was an error processing your request")
     except Exception as e:
         raise HTTPException(500, "There was an error processing your request")
-    
+
+#Create a new contact
 @app.post('/createContact')
 async def createContact(request: Request, contactReq: CreateContactRequest, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)) -> int:
     try:
@@ -259,6 +306,7 @@ async def createContact(request: Request, contactReq: CreateContactRequest, snip
         userid = getUserIdFromJwt(snipsnap_jwt)
         contactId = session.exec(select(User.userid).where(User.email == contactReq.email)).first()
 
+        #Create a new contact using the user id associated with the email in the contact request
         if (contactId is not None):
             contact = Contact(**contactReq.model_dump())
             contact.userid = userid
