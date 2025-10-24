@@ -10,5 +10,13 @@ class SnipsResponse(SnipBase):
 class ContactsResponse(ContactsBase):
     pass
 
+class CollectionResponse(CollectionBase):
+    collectionid: int
+
 class SettingsResponse(UserBase):
     contacts: List[ContactsResponse]
+
+class SnipDetailsResponse(SnipBase):
+    collections: List[CollectionResponse]
+    contacts: List[ContactsResponse]
+    sharedwith: List[int]
