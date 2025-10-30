@@ -5,14 +5,15 @@ from models.http.base_http_models import *
 class UserResponse(UserBase):
     pass
 
-class SnipsResponse(SnipBase):
-    pass
-
 class ContactsResponse(ContactsBase):
     pass
 
 class CollectionResponse(CollectionBase):
     pass
+
+class SnipsResponse(SnipBase):
+    lastmodified: datetime
+    snipshared: bool
 
 class SettingsResponse(UserBase):
     contacts: List[ContactsResponse]
