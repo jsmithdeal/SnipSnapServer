@@ -1,4 +1,6 @@
 from typing import List
+
+from pydantic import BaseModel
 from models.http.base_http_models import *
 
 class UserResponse(UserBase):
@@ -22,3 +24,7 @@ class SnipDetailsResponse(SnipBase):
     collections: List[CollectionResponse]
     contacts: List[ContactsResponse]
     sharedwith: List[int]
+
+class SnipInitResponse(BaseModel):
+    contacts: List[ContactsResponse]
+    collections: List[CollectionResponse]
