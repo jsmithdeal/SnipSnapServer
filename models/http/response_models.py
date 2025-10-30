@@ -11,12 +11,14 @@ class ContactsResponse(ContactsBase):
     pass
 
 class CollectionResponse(CollectionBase):
-    collectionid: int
+    pass
 
 class SettingsResponse(UserBase):
     contacts: List[ContactsResponse]
 
 class SnipDetailsResponse(SnipBase):
+    snipcontent: str
+    collectionid: int | None
     collections: List[CollectionResponse]
     contacts: List[ContactsResponse]
     sharedwith: List[int]

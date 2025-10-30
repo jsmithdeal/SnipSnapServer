@@ -121,16 +121,22 @@ async def getSnips(request: Request, snipsnap_jwt: str = Cookie(None), session: 
             raise HTTPException(401, "Unauthorized")
         
         userid = getUserIdFromJwt(snipsnap_jwt)
-
-        subQ = select(exists().where(Snip.snipid == Shared.snipid and Snip.userid == Shared.userid)).scalar_subquery()
-        snips = session.exec(select(
-            Snip.snipid, 
-            Snip.sniplanguage, 
-            Snip.snipname, 
-            Snip.snipdescription, 
-            Snip.lastmodified,
-            subQ.label("snipshared")
-        ).where(Snip.userid == userid)).all()
+        
+        #Had to execute the query first THEN build the object. Previously had used a subquery with
+        #exists() to determine if a record for the snip was in the shared table. SQL alchemy was appending
+        #the snips table to the FROM clause, causing snipshared to be true for all snips for a user
+        query = session.exec(select(Snip)
+                    .where(Snip.userid == userid)
+                    .options(selectinload(Snip.sharedwith)))
+        
+        snips = ({
+            "snipid": snip.snipid,
+            "sniplanguage": snip.sniplanguage,
+            "snipname": snip.snipname,
+            "snipdescription": snip.snipdescription,
+            "lastmodified": snip.lastmodified,
+            "snipshared": True if len(snip.sharedwith) > 0 else False
+        } for snip in query)
 
         return snips
     except HTTPException as e:
@@ -168,7 +174,7 @@ async def getSettings(request: Request, snipsnap_jwt: str = Cookie(None), sessio
         raise HTTPException(500, "There was an error processing your request")
 
 #Get details about a snip
-@app.get('/getSnipDetails', response_model=SnipDetailsResponse)
+@app.get('/getSnipDetails/{snipId}', response_model=SnipDetailsResponse)
 async def getSnipDetails(request: Request, snipId: int, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)) -> SnipDetailsResponse:
     try:
         csfr = request.headers.get("snipsnap_csfr")
@@ -189,6 +195,8 @@ async def getSnipDetails(request: Request, snipId: int, snipsnap_jwt: str = Cook
             snipname=snipDetails.snipname,
             snipdescription=snipDetails.snipdescription,
             sniplanguage=snipDetails.sniplanguage,
+            snipcontent=snipDetails.snipcontent,
+            collectionid=snipDetails.collectionid,
             lastmodified=snipDetails.lastmodified,
             snipshared=(True if len(snipDetails.sharedwith) > 0 else False),
             collections=snipDetails.user.collections,
