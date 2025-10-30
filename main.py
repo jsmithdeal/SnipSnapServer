@@ -6,7 +6,7 @@ from sqlmodel import Session, exists, select, update, delete
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy.orm import selectinload
 import uvicorn
-from models.db_models import Contact, Shared, Snip, User
+from models.db_models import Contact, Snip, User
 from models.http.request_models import *
 from models.http.response_models import *
 from config import get_session, init_db
@@ -153,6 +153,30 @@ async def getSnips(request: Request, snipsnap_jwt: str = Cookie(None), session: 
         } for snip in query)
 
         return snips
+    except HTTPException as e:
+        raise
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(500, "There was an error processing your request")
+    except Exception as e:
+        raise HTTPException(500, "There was an error processing your request")
+    
+#Get information needed to create a new snip
+@app.get("/getSnipInit", response_model=SnipInitResponse)
+async def getSnipInit(request: Request, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)) -> SnipInitResponse:
+    try:
+        csfr = request.headers.get("snipsnap_csfr")
+
+        if (not isAuthenticated(csfr, snipsnap_jwt)):
+            raise HTTPException(401, "Unauthorized")
+        
+        userid = getUserIdFromJwt(snipsnap_jwt)
+        userinfo = session.exec(select(User).where(User.userid == userid)).first()
+
+        return SnipInitResponse(
+            contacts=userinfo.contacts,
+            collections=userinfo.collections
+        )
     except HTTPException as e:
         raise
     except SQLAlchemyError as e:
