@@ -13,6 +13,7 @@ class ContactsBase(SQLModel):
 
 class CollectionBase(SQLModel):
     collectionname: str
+    collectionid: int
 
 class SnipBase(SQLModel):
     snipid: int

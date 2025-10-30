@@ -32,7 +32,7 @@ class Snip(SQLModel, table=True):
     __tablename__ = "snips"
     snipid: int = Field(default=None, primary_key=True)
     userid: int = Field(foreign_key="users.userid")
-    collectionid: int = Field(foreign_key="collections.collectionid")
+    collectionid: int = Field(default=None, foreign_key="collections.collectionid")
     snipname: str
     sniplanguage: str
     snipdescription: str
