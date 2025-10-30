@@ -2,7 +2,7 @@ from datetime import timedelta
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, Request
 from sqlmodel import Session, select
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
-from models.db_models import Contact, Snip, User
+from models.db_models import Contact, Shared, Snip, User
 from models.http.request_models import *
 from models.http.response_models import *
 from config import get_session
@@ -11,8 +11,8 @@ from utils.security import *
 post_router = APIRouter(prefix="")
 
 #Sign up form endpoint
-@post_router.post('/create-user')
-async def create_user(user: CreateUserRequest, session: Session = Depends(get_session)):
+@post_router.post('/createUser')
+async def createUser(user: CreateUserRequest, session: Session = Depends(get_session)):
     try:
         #Dump user to model, reset password to hashed version, and insert to db
         user = User(**user.model_dump())
@@ -150,3 +150,41 @@ async def checkAuth(request: Request, snipsnap_jwt: str = Cookie(None)):
         raise
     except Exception as e:
         raise HTTPException(500, "There was an error processing your request")
+    
+#Create snip endpoint
+@post_router.post('/createSnip')
+async def createSnip(request: Request, snipreq: SaveSnipRequest, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)):
+    secondCommit=False
+
+    try:
+        csfr = request.headers.get("snipsnap_csfr")
+        userid = getAuthenticatedUser(csfr, snipsnap_jwt)
+
+        if (userid <= -1):
+            raise HTTPException(401, "Unauthorized")
+        
+        snip = Snip(
+            userid=userid,
+            snipname=snipreq.snipname,
+            snipdescription=snipreq.snipdescription,
+            sniplanguage=snipreq.sniplanguage,
+            snipcontent=snipreq.snipcontent,
+            collectionid=snipreq.collectionid
+        )
+
+        session.add(snip)
+        session.commit()
+        session.refresh(snip)
+
+        snipid = snip.snipid
+
+        if len(snipreq.sharedwith) > 0:
+            secondCommit=True
+            sharedwith: List[Shared] = [Shared(snipid=snipid, userid=userid, contactid=contactid) for contactid in snipreq.sharedwith]
+            session.add_all(sharedwith)
+            session.commit()
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(500, "Snip created, but there was a problem sharing with contacts" if secondCommit else "There was an error processing your request")
+    except Exception as e:
+        raise HTTPException(500, "Snip created, but there was a problem sharing with contacts" if secondCommit else "There was an error processing your request")

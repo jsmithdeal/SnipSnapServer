@@ -20,8 +20,6 @@ class SnipBase(SQLModel):
     snipname: str
     sniplanguage: str
     snipdescription: str
-    lastmodified: datetime
-    snipshared: bool
 
     #Need this pydantic nested Config class to allow object mapping on select
     class Config:

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, Request
 from sqlmodel import Session, delete
 from sqlalchemy.exc import SQLAlchemyError
-from models.db_models import Contact, User
+from models.db_models import Contact, Snip, User
 from models.http.request_models import *
 from models.http.response_models import *
 from config import get_session
@@ -57,7 +57,27 @@ async def deleteContact(request: Request, contactId: int, snipsnap_jwt: str = Co
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
         
-        session.exec(delete(Contact).where(Contact.userid == userid and Contact.contactid == contactId))
+        session.exec(delete(Contact).where((Contact.userid == userid) & (Contact.contactid == contactId)))
+        session.commit()
+    except HTTPException as e:
+        raise
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(500, "There was an error processing your request")
+    except Exception as e:
+        raise HTTPException(500, "There was an error processing your request")
+    
+#Delete a snip
+@delete_router.delete('/deleteSnip/{snipId}')
+async def deleteSnip(request: Request, snipId: int, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)):
+    try:
+        csfr = request.headers.get("snipsnap_csfr")
+        userid = getAuthenticatedUser(csfr, snipsnap_jwt)
+
+        if (userid <= -1):
+            raise HTTPException(401, "Unauthorized")
+        
+        session.exec(delete(Snip).where(Snip.snipid == snipId))
         session.commit()
     except HTTPException as e:
         raise
