@@ -1,5 +1,4 @@
 from typing import List
-
 from pydantic import BaseModel
 from models.http.base_http_models import *
 

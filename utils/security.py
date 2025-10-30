@@ -26,19 +26,17 @@ def issueTokens(userId: int, email: str, tokenExp: datetime) -> tuple:
 
     return (csfrToken, jwtToken)
 
-#Authenticate user with JWT and claims
-def isAuthenticated(csfrToken: str, jwtToken: str) -> bool:
+#Authenticate user with JWT and claims. Return user ID if authenticated, else -1
+def getAuthenticatedUser(csfrToken: str, jwtToken: str) -> bool:
     #jwt.decode automatically throws exception if token expired. Wrap this code in try catch
-    #so we can return false for easier handling rather than reading exception types
+    #so we can return -1 for easier handling rather than reading exception types
     try:
         decodedJwt = jwt.decode(jwtToken, JWT_SECRET, "HS256")
         jCsfr = decodedJwt["csfr"]
         
-        return jCsfr == csfrToken
+        if jCsfr == csfrToken:
+            return decodedJwt["userId"]
+        
+        return -1
     except Exception as e:
-        return False
-    
-#Decode jwt to get userId
-def getUserIdFromJwt(jwtToken: str):
-    decodedJwt = jwt.decode(jwtToken, JWT_SECRET, "HS256")
-    return decodedJwt["userId"]
+        return -1
