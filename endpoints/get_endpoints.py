@@ -2,7 +2,7 @@ from fastapi import APIRouter, Cookie, Depends, HTTPException, Request
 from sqlmodel import Session, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import selectinload
-from models.db_models import Snip, User
+from models.db_models import Shared, Snip, User
 from models.http.request_models import *
 from models.http.response_models import *
 from config import get_session
@@ -125,6 +125,38 @@ async def getSettings(request: Request, snipsnap_jwt: str = Cookie(None), sessio
             lastname=settings.lastname,
             contacts=settings.contacts
         )
+    except HTTPException as e:
+        raise
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(500, "There was an error processing your request")
+    except Exception as e:
+        raise HTTPException(500, "There was an error processing your request")
+    
+#Get list of snips shared with the user
+@get_router.get("/getSharedWithMe", response_model=List[SnipsResponse])
+async def getSharedWithMe(request: Request, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)) -> List[SnipsResponse]:
+    try:
+        csfr = request.headers.get("snipsnap_csfr")
+        userid = getAuthenticatedUser(csfr, snipsnap_jwt)
+
+        if (userid <= -1):
+            raise HTTPException(401, "Unauthorized")
+        
+        shared = session.exec(select(Shared).where(Shared.contactid == userid).options(
+            selectinload(Shared.snip)
+        )).all()
+
+        snips = [SnipsResponse(
+            snipid=s.snip.snipid,
+            snipname=s.snip.snipname,
+            snipdescription= s.snip.snipdescription,
+            sniplanguage=s.snip.sniplanguage,
+            lastmodified=s.snip.lastmodified,
+            snipshared=True
+        ) for s in shared]
+
+        return snips
     except HTTPException as e:
         raise
     except SQLAlchemyError as e:
