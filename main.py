@@ -8,13 +8,10 @@ from endpoints.post_endpoints import post_router
 from endpoints.patch_endpoints import patch_router
 
 app = FastAPI()
-app.include_router(get_router)
-app.include_router(delete_router)
-app.include_router(post_router)
-app.include_router(patch_router)
 
 #for debugging
 origins = [
+    "http://192.168.0.74:5173",
     "http://localhost:5173" 
 ]
 
@@ -30,3 +27,8 @@ app.add_middleware(
 async def lifespan(app: FastAPI):
     init_db()
     yield
+
+app.include_router(get_router)
+app.include_router(delete_router)
+app.include_router(post_router)
+app.include_router(patch_router)
