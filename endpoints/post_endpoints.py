@@ -55,9 +55,10 @@ async def login(response: Response, login: LoginRequest, session: Session = Depe
             value=jwt,
             expires=expDate,
             path="/",
-            secure=False,
+            secure=True,
             httponly=True,
-            samesite="lax"
+            samesite="None",
+            domain="piofthesky.org"
         )
 
         response.set_cookie(
@@ -65,9 +66,10 @@ async def login(response: Response, login: LoginRequest, session: Session = Depe
             value=csfr,
             expires=expDate,
             path="/",
-            secure=False,
+            secure=True,
             httponly=False,
-            samesite="lax"
+            samesite="None",
+            domain="piofthesky.org"
         )
     except HTTPException as e:
         raise
@@ -85,18 +87,20 @@ async def logout(response: Response):
             key="snipsnap_jwt",
             expires=0,
             path="/",
-            secure=False,
+            secure=True,
             httponly=True,
-            samesite="lax"
+            samesite="None",
+            domain="piofthesky.org"
         )
 
         response.set_cookie(
             key="snipsnap_csfr",
             expires=0,
             path="/",
-            secure=False,
+            secure=True,
             httponly=False,
-            samesite="lax"
+            samesite="None",
+            domain="piofthesky.org"
         )
     except HTTPException as e:
         raise

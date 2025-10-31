@@ -26,18 +26,20 @@ async def deleteAccount(response: Response, request: Request, snipsnap_jwt: str 
             key="snipsnap_jwt",
             expires=0,
             path="/",
-            secure=False,
+            secure=True,
             httponly=True,
-            samesite="lax"
+            samesite="None",
+            domain="piofthesky.org"
         )
 
         response.set_cookie(
             key="snipsnap_csfr",
             expires=0,
             path="/",
-            secure=False,
+            secure=True,
             httponly=False,
-            samesite="lax"
+            samesite="None",
+            domain="piofthesky.org"
         )
     except HTTPException as e:
         raise
