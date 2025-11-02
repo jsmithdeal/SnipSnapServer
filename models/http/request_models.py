@@ -4,6 +4,9 @@ from models.http.base_http_models import *
 class UpdateUserRequest(UserBase):
     pass
 
+class UpdateCollectionRequest(CollectionBase):
+    pass
+
 class CreateUserRequest(UserBase):
     password: str
 
