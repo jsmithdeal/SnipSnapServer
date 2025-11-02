@@ -27,6 +27,7 @@ class Collection(SQLModel, table=True):
 
     #Non-column ORM relationships
     user: User = Relationship(back_populates="collections", sa_relationship_kwargs={"foreign_keys": "Collection.userid"})
+    snips: List["Snip"] = Relationship(back_populates="collection", sa_relationship_kwargs={"foreign_keys": "Snip.collectionid"})
 
 class Snip(SQLModel, table=True):
     __tablename__ = "snips"
@@ -43,6 +44,7 @@ class Snip(SQLModel, table=True):
     #Non-column ORM relationships
     user: User = Relationship(back_populates="snips", sa_relationship_kwargs={"foreign_keys": "Snip.userid"})
     sharedwith: List["Shared"] = Relationship(back_populates="snip", sa_relationship_kwargs={"foreign_keys": "Shared.snipid"})
+    collection: Collection = Relationship(back_populates="snips", sa_relationship_kwargs={"foreign_keys": "Snip.collectionid"})
 
 class Contact(SQLModel, table=True):
     __tablename__ = "contacts"

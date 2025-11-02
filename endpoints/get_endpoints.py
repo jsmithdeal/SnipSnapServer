@@ -2,7 +2,7 @@ from fastapi import APIRouter, Cookie, Depends, HTTPException, Request
 from sqlmodel import Session, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import selectinload
-from models.db_models import Shared, Snip, User
+from models.db_models import Collection, Shared, Snip, User
 from models.http.request_models import *
 from models.http.response_models import *
 from config import get_session
@@ -27,14 +27,14 @@ async def getSnips(request: Request, snipsnap_jwt: str = Cookie(None), session: 
                     .where(Snip.userid == userid)
                     .options(selectinload(Snip.sharedwith)))
         
-        snips = ({
-            "snipid": snip.snipid,
-            "sniplanguage": snip.sniplanguage,
-            "snipname": snip.snipname,
-            "snipdescription": snip.snipdescription,
-            "lastmodified": snip.lastmodified,
-            "snipshared": True if len(snip.sharedwith) > 0 else False
-        } for snip in query)
+        snips = (SnipsResponse(
+            snipid=snip.snipid,
+            sniplanguage=snip.sniplanguage,
+            snipname=snip.snipname,
+            snipdescription=snip.snipdescription,
+            lastmodified=snip.lastmodified,
+            snipshared=True if len(snip.sharedwith) > 0 else False
+         ) for snip in query)
 
         return snips
     except HTTPException as e:
@@ -147,14 +147,71 @@ async def getSharedWithMe(request: Request, snipsnap_jwt: str = Cookie(None), se
             selectinload(Shared.snip)
         )).all()
 
-        snips = [SnipsResponse(
+        snips = (SnipsResponse(
             snipid=s.snip.snipid,
             snipname=s.snip.snipname,
             snipdescription= s.snip.snipdescription,
             sniplanguage=s.snip.sniplanguage,
             lastmodified=s.snip.lastmodified,
             snipshared=True
-        ) for s in shared]
+        ) for s in shared)
+
+        return snips
+    except HTTPException as e:
+        raise
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(500, "There was an error processing your request")
+    except Exception as e:
+        raise HTTPException(500, "There was an error processing your request")
+    
+#Get collections for user
+@get_router.get("/getCollections", response_model=List[CollectionResponse])
+async def getCollections(request: Request, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)) -> List[CollectionResponse]:
+    try:
+        csfr = request.headers.get("snipsnap_csfr")
+        userid = getAuthenticatedUser(csfr, snipsnap_jwt)
+
+        if (userid <= -1):
+            raise HTTPException(401, "Unauthorized")
+        
+        query = session.exec(select(Collection).where(Collection.userid == userid))
+        collections = (CollectionResponse(
+            collectionid=c.collectionid,
+            collectionname=c.collectionname
+        ) for c in query)
+
+        return collections
+    except HTTPException as e:
+        raise
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(500, "There was an error processing your request")
+    except Exception as e:
+        raise HTTPException(500, "There was an error processing your request")
+    
+#Get list of snips that belong to the specified collection
+@get_router.get("/getCollectionSnips/{collId}", response_model=List[SnipsResponse])
+async def getCollectionSnips(request: Request, collId: int, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)) -> List[SnipsResponse]:
+    try:
+        csfr = request.headers.get("snipsnap_csfr")
+        userid = getAuthenticatedUser(csfr, snipsnap_jwt)
+
+        if (userid <= -1):
+            raise HTTPException(401, "Unauthorized")
+        
+        collection = session.exec(select(Collection).where(Collection.collectionid == collId).options(
+            selectinload(Collection.snips)
+        )).first()
+
+        snips = (SnipsResponse(
+            snipid=s.snipid,
+            snipname=s.snipname,
+            snipdescription= s.snipdescription,
+            sniplanguage=s.sniplanguage,
+            lastmodified=s.lastmodified,
+            snipshared=True if len(s.sharedwith) > 0 else False
+        ) for s in collection.snips)
 
         return snips
     except HTTPException as e:

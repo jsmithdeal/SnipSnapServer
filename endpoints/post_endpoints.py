@@ -2,7 +2,7 @@ from datetime import timedelta
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, Request
 from sqlmodel import Session, select
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
-from models.db_models import Contact, Shared, Snip, User
+from models.db_models import Collection, Contact, Shared, Snip, User
 from models.http.request_models import *
 from models.http.response_models import *
 from config import get_session
@@ -188,3 +188,24 @@ async def createSnip(request: Request, snipreq: SaveSnipRequest, snipsnap_jwt: s
         raise HTTPException(500, "Snip created, but there was a problem sharing with contacts" if secondCommit else "There was an error processing your request")
     except Exception as e:
         raise HTTPException(500, "Snip created, but there was a problem sharing with contacts" if secondCommit else "There was an error processing your request")
+    
+#Add collection
+@post_router.post('/createCollection/{collName}')
+async def createCollection(request: Request, collName: str, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)) -> int:
+    try:
+        csfr = request.headers.get("snipsnap_csfr")
+        userid = getAuthenticatedUser(csfr, snipsnap_jwt)
+
+        if (userid <= -1):
+            raise HTTPException(401, "Unauthorized")
+        
+        collection = Collection(userid=userid, collectionname=collName)
+        session.add(collection)
+        session.commit()
+        session.refresh(collection)
+        return collection.collectionid
+    except SQLAlchemyError as e:
+        session.rollback()
+        raise HTTPException(500, "There was an error processing your request")
+    except Exception as e:
+        raise HTTPException(500, "There was an error processing your request")
