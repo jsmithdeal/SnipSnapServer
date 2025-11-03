@@ -19,7 +19,12 @@ async def saveUserInfo(request: Request, updateReq: UpdateUserRequest, snipsnap_
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
         
-        session.exec(update(User).where(User.userid == userid).values(email=updateReq.email, firstname=updateReq.firstname, lastname=updateReq.lastname))
+        session.exec(update(User).where(User.userid == userid).values(
+            email=updateReq.email, 
+            firstname=updateReq.firstname, 
+            lastname=updateReq.lastname, 
+            lastmodified=updateReq.lastmodified
+        ))
         session.commit()
     except HTTPException as e:
         raise
@@ -72,7 +77,10 @@ async def editCollectionName(request: Request, updateReq: UpdateCollectionReques
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
         
-        session.exec(update(Collection).where(Collection.collectionid == updateReq.collectionid).values(collectionname=updateReq.collectionname))
+        session.exec(update(Collection).where(Collection.collectionid == updateReq.collectionid).values(
+            collectionname=updateReq.collectionname, 
+            lastmodified=updateReq.lastmodified
+        ))
         session.commit()
     except HTTPException as e:
         raise

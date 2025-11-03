@@ -2,10 +2,10 @@ from typing import List
 from models.http.base_http_models import *
 
 class UpdateUserRequest(UserBase):
-    pass
+    lastmodified: datetime
 
 class UpdateCollectionRequest(CollectionBase):
-    pass
+    lastmodified: datetime
 
 class CreateUserRequest(UserBase):
     password: str
