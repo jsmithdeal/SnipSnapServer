@@ -41,9 +41,9 @@ async def getSnips(request: Request, snipsnap_jwt: str = Cookie(None), session: 
         raise
     except SQLAlchemyError as e:
         session.rollback()
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     except Exception as e:
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     
 #Get information needed to create a new snip
 @get_router.get("/getSnipInit", response_model=SnipInitResponse)
@@ -65,9 +65,9 @@ async def getSnipInit(request: Request, snipsnap_jwt: str = Cookie(None), sessio
         raise
     except SQLAlchemyError as e:
         session.rollback()
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     except Exception as e:
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     
 #Get details about a snip
 @get_router.get('/getSnipDetails/{snipId}', response_model=SnipDetailsResponse)
@@ -103,9 +103,9 @@ async def getSnipDetails(request: Request, snipId: int, snipsnap_jwt: str = Cook
         raise
     except SQLAlchemyError as e:
         session.rollback()
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     except Exception as e:
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     
 #Get the object to populate the settings page
 @get_router.get('/getSettings', response_model=SettingsResponse)
@@ -129,9 +129,9 @@ async def getSettings(request: Request, snipsnap_jwt: str = Cookie(None), sessio
         raise
     except SQLAlchemyError as e:
         session.rollback()
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     except Exception as e:
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     
 #Get list of snips shared with the user
 @get_router.get("/getSharedWithMe", response_model=List[SnipsResponse])
@@ -161,9 +161,9 @@ async def getSharedWithMe(request: Request, snipsnap_jwt: str = Cookie(None), se
         raise
     except SQLAlchemyError as e:
         session.rollback()
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     except Exception as e:
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     
 #Get collections for user
 @get_router.get("/getCollections", response_model=List[CollectionResponse])
@@ -186,9 +186,9 @@ async def getCollections(request: Request, snipsnap_jwt: str = Cookie(None), ses
         raise
     except SQLAlchemyError as e:
         session.rollback()
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     except Exception as e:
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     
 #Get list of snips that belong to the specified collection
 @get_router.get("/getCollectionSnips/{collId}", response_model=List[SnipsResponse])
@@ -218,6 +218,6 @@ async def getCollectionSnips(request: Request, collId: int, snipsnap_jwt: str = 
         raise
     except SQLAlchemyError as e:
         session.rollback()
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     except Exception as e:
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))

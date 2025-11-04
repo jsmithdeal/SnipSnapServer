@@ -30,9 +30,9 @@ async def saveUserInfo(request: Request, updateReq: UpdateUserRequest, snipsnap_
         raise
     except SQLAlchemyError as e:
         session.rollback()
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     except Exception as e:
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     
 #Create snip endpoint
 @patch_router.patch('/editSnip')
@@ -63,9 +63,9 @@ async def editSnip(request: Request, snip: SaveSnipRequest, snipsnap_jwt: str = 
         session.commit()
     except SQLAlchemyError as e:
         session.rollback()
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     except Exception as e:
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     
 #Edit collection name
 @patch_router.patch('/editCollectionName')
@@ -86,6 +86,6 @@ async def editCollectionName(request: Request, updateReq: UpdateCollectionReques
         raise
     except SQLAlchemyError as e:
         session.rollback()
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     except Exception as e:
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
