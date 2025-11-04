@@ -43,9 +43,9 @@ async def deleteAccount(response: Response, request: Request, snipsnap_jwt: str 
         raise
     except SQLAlchemyError as e:
         session.rollback()
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     except Exception as e:
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     
 #Delete a contact
 @delete_router.delete('/deleteContact/{contactId}')
@@ -63,9 +63,9 @@ async def deleteContact(request: Request, contactId: int, snipsnap_jwt: str = Co
         raise
     except SQLAlchemyError as e:
         session.rollback()
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     except Exception as e:
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     
 #Delete a snip
 @delete_router.delete('/deleteSnip/{snipId}')
@@ -83,9 +83,9 @@ async def deleteSnip(request: Request, snipId: int, snipsnap_jwt: str = Cookie(N
         raise
     except SQLAlchemyError as e:
         session.rollback()
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     except Exception as e:
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     
 #Delete a collection
 @delete_router.delete('/deleteCollection/{collId}')
@@ -103,6 +103,6 @@ async def deleteCollection(request: Request, collId: int, snipsnap_jwt: str = Co
         raise
     except SQLAlchemyError as e:
         session.rollback()
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     except Exception as e:
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))

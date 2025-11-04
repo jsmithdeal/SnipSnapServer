@@ -26,9 +26,9 @@ async def createUser(user: CreateUserRequest, session: Session = Depends(get_ses
         if isinstance(e, IntegrityError):
             raise HTTPException(409, "This email is taken")
         else:
-            raise HTTPException(500, "There was an error processing your request")
+            raise HTTPException(500, str(e))
     except Exception as e:
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
 
 #Login form endpoint
 @post_router.post('/login')
@@ -73,9 +73,9 @@ async def login(response: Response, login: LoginRequest, session: Session = Depe
         raise
     except SQLAlchemyError as e:
         session.rollback()
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     except Exception as e:
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
 
 #Log the user out by expiring tokens
 @post_router.post("/logout")
@@ -101,7 +101,7 @@ async def logout(response: Response):
     except HTTPException as e:
         raise
     except Exception as e:
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     
 #Create a new contact
 @post_router.post('/createContact')
@@ -134,9 +134,9 @@ async def createContact(request: Request, contactReq: CreateContactRequest, snip
         if isinstance(e, IntegrityError):
             raise HTTPException(409, "This user is already one of your contacts")
         else:
-            raise HTTPException(500, "There was an error processing your request")
+            raise HTTPException(500, str(e))
     except Exception as e:
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     
 #Check the validity of the jwt token and ensure the csfr token matches what is encoded in the jwt
 @post_router.post('/checkAuth')
@@ -149,7 +149,7 @@ async def checkAuth(request: Request, snipsnap_jwt: str = Cookie(None)):
     except HTTPException as e:
         raise
     except Exception as e:
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     
 #Create snip endpoint
 @post_router.post('/createSnip')
@@ -185,9 +185,9 @@ async def createSnip(request: Request, snipreq: SaveSnipRequest, snipsnap_jwt: s
             session.commit()
     except SQLAlchemyError as e:
         session.rollback()
-        raise HTTPException(500, "Snip created, but there was a problem sharing with contacts" if secondCommit else "There was an error processing your request")
+        raise HTTPException(500, "Snip created, but there was a problem sharing with contacts" if secondCommit else str(e))
     except Exception as e:
-        raise HTTPException(500, "Snip created, but there was a problem sharing with contacts" if secondCommit else "There was an error processing your request")
+        raise HTTPException(500, "Snip created, but there was a problem sharing with contacts" if secondCommit else str(e))
     
 #Add collection
 @post_router.post('/createCollection/{collName}')
@@ -206,6 +206,6 @@ async def createCollection(request: Request, collName: str, snipsnap_jwt: str = 
         return collection.collectionid
     except SQLAlchemyError as e:
         session.rollback()
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
     except Exception as e:
-        raise HTTPException(500, "There was an error processing your request")
+        raise HTTPException(500, str(e))
