@@ -79,7 +79,7 @@ async def deleteSnip(request: Request, snipId: int, snipsnap_jwt: str = Cookie(N
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
         
-        session.exec(delete(Snip).where(Snip.snipid == snipId))
+        session.exec(delete(Snip).where((Snip.userid == userid) & (Snip.snipid == snipId)))
         session.commit()
     except HTTPException as e:
         raise
@@ -99,7 +99,7 @@ async def deleteCollection(request: Request, collId: int, snipsnap_jwt: str = Co
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
         
-        session.exec(delete(Collection).where(Collection.collectionid == collId))
+        session.exec(delete(Collection).where((Collection.userid == userid) & (Collection.collectionid == collId)))
         session.commit()
     except HTTPException as e:
         raise

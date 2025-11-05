@@ -44,7 +44,7 @@ async def editSnip(request: Request, snip: SaveSnipRequest, snipsnap_jwt: str = 
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
 
-        session.exec(update(Snip).where(Snip.snipid == snip.snipid).values(
+        updateResult = session.exec(update(Snip).where((Snip.userid == userid) & (Snip.snipid == snip.snipid)).values(
             userid=userid,
             snipname=snip.snipname,
             snipdescription=snip.snipdescription,
@@ -54,11 +54,14 @@ async def editSnip(request: Request, snip: SaveSnipRequest, snipsnap_jwt: str = 
             lastmodified=snip.lastmodified
         ))
 
-        session.exec(delete(Shared).where(Shared.snipid == snip.snipid))
+        if (updateResult.rowcount > 0):
+            session.exec(delete(Shared).where((Shared.userid == userid) & (Shared.snipid == snip.snipid)))
         
-        if len(snip.sharedwith) > 0:
-            sharedwith: List[Shared] = [Shared(snipid=snip.snipid, userid=userid, contactid=contactid) for contactid in snip.sharedwith]
-            session.add_all(sharedwith)
+            if len(snip.sharedwith) > 0:
+                sharedwith: List[Shared] = [Shared(snipid=snip.snipid, userid=userid, contactid=contactid) for contactid in snip.sharedwith]
+                session.add_all(sharedwith)
+        else:
+            raise HTTPException(500, "There was a problem updating the snip")
             
         session.commit()
     except SQLAlchemyError as e:
@@ -77,7 +80,7 @@ async def editCollectionName(request: Request, updateReq: UpdateCollectionReques
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
         
-        session.exec(update(Collection).where(Collection.collectionid == updateReq.collectionid).values(
+        session.exec(update(Collection).where((Collection.userid == userid) & (Collection.collectionid == updateReq.collectionid)).values(
             collectionname=updateReq.collectionname, 
             lastmodified=updateReq.lastmodified
         ))
