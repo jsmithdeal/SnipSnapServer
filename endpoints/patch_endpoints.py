@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Request
-from sqlmodel import Session, delete, update
+from sqlmodel import Session, delete, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from models.db_models import Collection, Shared, Snip, User
 from models.http.request_models import *
@@ -44,6 +44,11 @@ async def editSnip(request: Request, snip: SaveSnipRequest, snipsnap_jwt: str = 
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
 
+        collection = session.exec(select(Collection.collectionid).where((Collection.userid == userid) & (Collection.collectionid == snip.collectionid))).first()
+
+        if (snip.collectionid is not None and collection is None):
+            raise HTTPException(500, "Unable to create snip")
+        
         updateResult = session.exec(update(Snip).where((Snip.userid == userid) & (Snip.snipid == snip.snipid)).values(
             userid=userid,
             snipname=snip.snipname,
