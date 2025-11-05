@@ -74,12 +74,13 @@ async def getSnipInit(request: Request, snipsnap_jwt: str = Cookie(None), sessio
 async def getSnipDetails(request: Request, snipId: int, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)) -> SnipDetailsResponse:
     try:
         csfr = request.headers.get("snipsnap_csfr")
+        userid = getAuthenticatedUser(csfr, snipsnap_jwt)
 
-        if (getAuthenticatedUser(csfr, snipsnap_jwt) <= -1):
+        if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
         
         snipDetails = session.exec(select(Snip)
-                                .where(Snip.snipid == snipId)
+                                .where((Snip.userid == userid) & (Snip.snipid == snipId))
                                 .options(
                                     selectinload(Snip.sharedwith),
                                     selectinload(Snip.user).selectinload(User.collections),
@@ -200,7 +201,7 @@ async def getCollectionSnips(request: Request, collId: int, snipsnap_jwt: str = 
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
         
-        collection = session.exec(select(Collection).where(Collection.collectionid == collId).options(
+        collection = session.exec(select(Collection).where((Collection.userid == userid) & (Collection.collectionid == collId)).options(
             selectinload(Collection.snips)
         )).first()
 
