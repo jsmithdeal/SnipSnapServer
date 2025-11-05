@@ -181,11 +181,9 @@ async def createSnip(request: Request, snipreq: SaveSnipRequest, snipsnap_jwt: s
         session.commit()
         session.refresh(snip)
 
-        snipid = snip.snipid
-
         if len(snipreq.sharedwith) > 0:
             secondCommit=True
-            sharedwith: List[Shared] = [Shared(snipid=snipid, userid=userid, contactid=contactid) for contactid in snipreq.sharedwith]
+            sharedwith: List[Shared] = [Shared(snipid=snip.snipid, userid=userid, contactid=contactid) for contactid in snipreq.sharedwith]
             session.add_all(sharedwith)
             session.commit()
     except SQLAlchemyError as e:
