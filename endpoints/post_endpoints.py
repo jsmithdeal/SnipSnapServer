@@ -207,6 +207,7 @@ async def createCollection(request: Request, collName: str, snipsnap_jwt: str = 
         session.add(collection)
         session.commit()
         session.refresh(collection)
+        
         return collection.collectionid
     except SQLAlchemyError as e:
         session.rollback()
