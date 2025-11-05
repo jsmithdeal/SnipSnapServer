@@ -167,6 +167,11 @@ async def createSnip(request: Request, snipreq: SaveSnipRequest, snipsnap_jwt: s
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
         
+        collection = session.exec(select(Collection.collectionid).where((Collection.userid == userid) & (Collection.collectionid == snipreq.collectionid))).first()
+
+        if (snipreq.collectionid is not None and collection is None):
+            raise HTTPException(500, "Unable to create snip")
+        
         snip = Snip(
             userid=userid,
             snipname=snipreq.snipname,
