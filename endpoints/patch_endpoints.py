@@ -58,7 +58,6 @@ async def editSnip(request: Request, snip: SaveSnipRequest, snipsnap_jwt: str = 
             collectionid=snip.collectionid,
             lastmodified=snip.lastmodified
         ))
-        session.commit()
 
         if (updateResult.rowcount > 0):
             session.exec(delete(Shared).where((Shared.userid == userid) & (Shared.snipid == snip.snipid)))
@@ -68,6 +67,8 @@ async def editSnip(request: Request, snip: SaveSnipRequest, snipsnap_jwt: str = 
                 session.add_all(sharedwith)
         else:
             raise HTTPException(500, "There was a problem updating the snip")
+        
+        session.commit()
     except SQLAlchemyError as e:
         session.rollback()
         raise HTTPException(500, str(e))
