@@ -13,8 +13,8 @@ patch_router = APIRouter(prefix="")
 @patch_router.patch('/saveUserInfo')
 async def saveUserInfo(request: Request, updateReq: UpdateUserRequest, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)):
     try:
-        csfr = request.headers.get("snipsnap_csfr")
-        userid = getAuthenticatedUser(csfr, snipsnap_jwt)
+        csrf = request.headers.get("snipsnap_csrf")
+        userid = getAuthenticatedUser(csrf, snipsnap_jwt)
 
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
@@ -38,8 +38,8 @@ async def saveUserInfo(request: Request, updateReq: UpdateUserRequest, snipsnap_
 @patch_router.patch('/editSnip')
 async def editSnip(request: Request, snip: SaveSnipRequest, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)):
     try:
-        csfr = request.headers.get("snipsnap_csfr")
-        userid = getAuthenticatedUser(csfr, snipsnap_jwt)
+        csrf = request.headers.get("snipsnap_csrf")
+        userid = getAuthenticatedUser(csrf, snipsnap_jwt)
 
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
@@ -79,8 +79,8 @@ async def editSnip(request: Request, snip: SaveSnipRequest, snipsnap_jwt: str = 
 @patch_router.patch('/editCollectionName')
 async def editCollectionName(request: Request, updateReq: UpdateCollectionRequest, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)):
     try:
-        csfr = request.headers.get("snipsnap_csfr")
-        userid = getAuthenticatedUser(csfr, snipsnap_jwt)
+        csrf = request.headers.get("snipsnap_csrf")
+        userid = getAuthenticatedUser(csrf, snipsnap_jwt)
 
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
