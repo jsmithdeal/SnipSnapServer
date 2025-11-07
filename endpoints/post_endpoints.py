@@ -58,7 +58,7 @@ async def login(response: Response, login: LoginRequest, session: Session = Depe
             secure=True,
             httponly=True,
             samesite="None",
-            domain="piofthesky.org"
+            domain="snip-snap.org"
         )
 
         response.set_cookie(
@@ -69,7 +69,7 @@ async def login(response: Response, login: LoginRequest, session: Session = Depe
             secure=True,
             httponly=False,
             samesite="None",
-            domain="piofthesky.org"
+            domain="snip-snap.org"
         )
     except HTTPException as e:
         raise
@@ -90,7 +90,7 @@ async def logout(response: Response):
             secure=True,
             httponly=True,
             samesite="None",
-            domain="piofthesky.org"
+            domain="snip-snap.org"
         )
 
         response.set_cookie(
@@ -100,7 +100,7 @@ async def logout(response: Response):
             secure=True,
             httponly=False,
             samesite="None",
-            domain="piofthesky.org"
+            domain="snip-snap.org"
         )
     except HTTPException as e:
         raise

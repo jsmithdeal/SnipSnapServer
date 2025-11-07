@@ -29,7 +29,7 @@ async def deleteAccount(response: Response, request: Request, snipsnap_jwt: str 
             secure=True,
             httponly=True,
             samesite="None",
-            domain="piofthesky.org"
+            domain="snip-snap.org"
         )
 
         response.set_cookie(
@@ -39,7 +39,7 @@ async def deleteAccount(response: Response, request: Request, snipsnap_jwt: str 
             secure=True,
             httponly=False,
             samesite="None",
-            domain="piofthesky.org"
+            domain="snip-snap.org"
         )
     except HTTPException as e:
         raise
