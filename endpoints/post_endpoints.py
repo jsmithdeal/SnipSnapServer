@@ -44,10 +44,10 @@ async def login(response: Response, login: LoginRequest, session: Session = Depe
         #If validated, issue tokens and return to client
         expDate = datetime.now(timezone.utc) + timedelta(hours=4)
         tokens = issueTokens(user.userid, user.email, expDate)
-        csfr = tokens[0]
+        csrf = tokens[0]
         jwt = tokens[1]
 
-        if ((tokens is None or not csfr) or (jwt is None or not jwt)):
+        if ((tokens is None or not csrf) or (jwt is None or not jwt)):
             raise HTTPException(500, "Failed to issue tokens")
         
         response.set_cookie(
@@ -61,8 +61,8 @@ async def login(response: Response, login: LoginRequest, session: Session = Depe
         )
 
         response.set_cookie(
-            key="snipsnap_csfr",
-            value=csfr,
+            key="snipsnap_csrf",
+            value=csrf,
             expires=expDate,
             path="/",
             secure=False,
@@ -91,7 +91,7 @@ async def logout(response: Response):
         )
 
         response.set_cookie(
-            key="snipsnap_csfr",
+            key="snipsnap_csrf",
             expires=0,
             path="/",
             secure=False,
@@ -107,8 +107,8 @@ async def logout(response: Response):
 @post_router.post('/createContact')
 async def createContact(request: Request, contactReq: CreateContactRequest, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)) -> int:
     try:
-        csfr = request.headers.get("snipsnap_csfr")
-        userid = getAuthenticatedUser(csfr, snipsnap_jwt)
+        csrf = request.headers.get("snipsnap_csrf")
+        userid = getAuthenticatedUser(csrf, snipsnap_jwt)
 
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
@@ -138,13 +138,13 @@ async def createContact(request: Request, contactReq: CreateContactRequest, snip
     except Exception as e:
         raise HTTPException(500, str(e))
     
-#Check the validity of the jwt token and ensure the csfr token matches what is encoded in the jwt
+#Check the validity of the jwt token and ensure the csrf token matches what is encoded in the jwt
 @post_router.post('/checkAuth')
 async def checkAuth(request: Request, snipsnap_jwt: str = Cookie(None)):
     try:
-        csfr = request.headers.get("snipsnap_csfr")
+        csrf = request.headers.get("snipsnap_csrf")
 
-        if (getAuthenticatedUser(csfr, snipsnap_jwt) <= -1):
+        if (getAuthenticatedUser(csrf, snipsnap_jwt) <= -1):
             raise HTTPException(401, "Unauthorized")
     except HTTPException as e:
         raise
@@ -157,8 +157,8 @@ async def createSnip(request: Request, snipreq: SaveSnipRequest, snipsnap_jwt: s
     secondCommit=False
 
     try:
-        csfr = request.headers.get("snipsnap_csfr")
-        userid = getAuthenticatedUser(csfr, snipsnap_jwt)
+        csrf = request.headers.get("snipsnap_csrf")
+        userid = getAuthenticatedUser(csrf, snipsnap_jwt)
 
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
@@ -196,8 +196,8 @@ async def createSnip(request: Request, snipreq: SaveSnipRequest, snipsnap_jwt: s
 @post_router.post('/createCollection/{collName}')
 async def createCollection(request: Request, collName: str, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)) -> int:
     try:
-        csfr = request.headers.get("snipsnap_csfr")
-        userid = getAuthenticatedUser(csfr, snipsnap_jwt)
+        csrf = request.headers.get("snipsnap_csrf")
+        userid = getAuthenticatedUser(csrf, snipsnap_jwt)
 
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")

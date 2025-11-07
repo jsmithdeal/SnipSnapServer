@@ -13,28 +13,28 @@ def hashPassword(password: str) -> bytes:
 def checkPassword(password: str, hashedPassword: str) -> bool:
     return bcrypt.checkpw(password.encode('utf-8'), hashedPassword.encode('utf-8'))
 
-#Issue new csfr and jwt tokens
+#Issue new csrf and jwt tokens
 def issueTokens(userId: int, email: str, tokenExp: datetime) -> tuple:
-    csfrToken = str(uuid.uuid4())
+    csrfToken = str(uuid.uuid4())
     jwtToken = jwt.encode({
         "userId": userId,
         "email": email,
         "iat": datetime.now(timezone.utc),
         "exp": tokenExp,
-        "csfr": csfrToken
+        "csrf": csrfToken
     }, JWT_SECRET, "HS256")
 
-    return (csfrToken, jwtToken)
+    return (csrfToken, jwtToken)
 
 #Authenticate user with JWT and claims. Return user ID if authenticated, else -1
-def getAuthenticatedUser(csfrToken: str, jwtToken: str) -> bool:
+def getAuthenticatedUser(csrfToken: str, jwtToken: str) -> bool:
     #jwt.decode automatically throws exception if token expired. Wrap this code in try catch
     #so we can return -1 for easier handling rather than reading exception types
     try:
         decodedJwt = jwt.decode(jwtToken, JWT_SECRET, "HS256")
-        jCsfr = decodedJwt["csfr"]
+        jcsrf = decodedJwt["csrf"]
         
-        if jCsfr == csfrToken:
+        if jcsrf == csrfToken:
             return decodedJwt["userId"]
         
         return -1

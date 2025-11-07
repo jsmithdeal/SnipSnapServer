@@ -13,8 +13,8 @@ delete_router = APIRouter(prefix="")
 @delete_router.delete('/deleteAccount')
 async def deleteAccount(response: Response, request: Request, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)):
     try:
-        csfr = request.headers.get("snipsnap_csfr")
-        userid = getAuthenticatedUser(csfr, snipsnap_jwt)
+        csrf = request.headers.get("snipsnap_csrf")
+        userid = getAuthenticatedUser(csrf, snipsnap_jwt)
 
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
@@ -32,7 +32,7 @@ async def deleteAccount(response: Response, request: Request, snipsnap_jwt: str 
         )
 
         response.set_cookie(
-            key="snipsnap_csfr",
+            key="snipsnap_csrf",
             expires=0,
             path="/",
             secure=False,
@@ -51,8 +51,8 @@ async def deleteAccount(response: Response, request: Request, snipsnap_jwt: str 
 @delete_router.delete('/deleteContact/{contactId}')
 async def deleteContact(request: Request, contactId: int, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)):
     try:
-        csfr = request.headers.get("snipsnap_csfr")
-        userid = getAuthenticatedUser(csfr, snipsnap_jwt)
+        csrf = request.headers.get("snipsnap_csrf")
+        userid = getAuthenticatedUser(csrf, snipsnap_jwt)
 
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
@@ -71,8 +71,8 @@ async def deleteContact(request: Request, contactId: int, snipsnap_jwt: str = Co
 @delete_router.delete('/deleteSnip/{snipId}')
 async def deleteSnip(request: Request, snipId: int, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)):
     try:
-        csfr = request.headers.get("snipsnap_csfr")
-        userid = getAuthenticatedUser(csfr, snipsnap_jwt)
+        csrf = request.headers.get("snipsnap_csrf")
+        userid = getAuthenticatedUser(csrf, snipsnap_jwt)
 
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
@@ -91,8 +91,8 @@ async def deleteSnip(request: Request, snipId: int, snipsnap_jwt: str = Cookie(N
 @delete_router.delete('/deleteCollection/{collId}')
 async def deleteCollection(request: Request, collId: int, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)):
     try:
-        csfr = request.headers.get("snipsnap_csfr")
-        userid = getAuthenticatedUser(csfr, snipsnap_jwt)
+        csrf = request.headers.get("snipsnap_csrf")
+        userid = getAuthenticatedUser(csrf, snipsnap_jwt)
 
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")

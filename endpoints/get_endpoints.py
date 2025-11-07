@@ -14,8 +14,8 @@ get_router = APIRouter(prefix="")
 @get_router.get("/getSnips", response_model=List[SnipsResponse])
 async def getSnips(request: Request, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)) -> List[SnipsResponse]:
     try:
-        csfr = request.headers.get("snipsnap_csfr")
-        userid = getAuthenticatedUser(csfr, snipsnap_jwt)
+        csrf = request.headers.get("snipsnap_csrf")
+        userid = getAuthenticatedUser(csrf, snipsnap_jwt)
 
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
@@ -49,8 +49,8 @@ async def getSnips(request: Request, snipsnap_jwt: str = Cookie(None), session: 
 @get_router.get("/getSnipInit", response_model=SnipInitResponse)
 async def getSnipInit(request: Request, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)) -> SnipInitResponse:
     try:
-        csfr = request.headers.get("snipsnap_csfr")
-        userid = getAuthenticatedUser(csfr, snipsnap_jwt)
+        csrf = request.headers.get("snipsnap_csrf")
+        userid = getAuthenticatedUser(csrf, snipsnap_jwt)
 
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
@@ -73,8 +73,8 @@ async def getSnipInit(request: Request, snipsnap_jwt: str = Cookie(None), sessio
 @get_router.get('/getSnipDetails/{snipId}', response_model=SnipDetailsResponse)
 async def getSnipDetails(request: Request, snipId: int, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)) -> SnipDetailsResponse:
     try:
-        csfr = request.headers.get("snipsnap_csfr")
-        userid = getAuthenticatedUser(csfr, snipsnap_jwt)
+        csrf = request.headers.get("snipsnap_csrf")
+        userid = getAuthenticatedUser(csrf, snipsnap_jwt)
 
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
@@ -112,8 +112,8 @@ async def getSnipDetails(request: Request, snipId: int, snipsnap_jwt: str = Cook
 @get_router.get('/getSettings', response_model=SettingsResponse)
 async def getSettings(request: Request, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)) -> SettingsResponse:
     try:
-        csfr = request.headers.get("snipsnap_csfr")
-        userid = getAuthenticatedUser(csfr, snipsnap_jwt)
+        csrf = request.headers.get("snipsnap_csrf")
+        userid = getAuthenticatedUser(csrf, snipsnap_jwt)
 
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
@@ -138,8 +138,8 @@ async def getSettings(request: Request, snipsnap_jwt: str = Cookie(None), sessio
 @get_router.get("/getSharedWithMe", response_model=List[SnipsResponse])
 async def getSharedWithMe(request: Request, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)) -> List[SnipsResponse]:
     try:
-        csfr = request.headers.get("snipsnap_csfr")
-        userid = getAuthenticatedUser(csfr, snipsnap_jwt)
+        csrf = request.headers.get("snipsnap_csrf")
+        userid = getAuthenticatedUser(csrf, snipsnap_jwt)
 
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
@@ -170,8 +170,8 @@ async def getSharedWithMe(request: Request, snipsnap_jwt: str = Cookie(None), se
 @get_router.get("/getCollections", response_model=List[CollectionResponse])
 async def getCollections(request: Request, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)) -> List[CollectionResponse]:
     try:
-        csfr = request.headers.get("snipsnap_csfr")
-        userid = getAuthenticatedUser(csfr, snipsnap_jwt)
+        csrf = request.headers.get("snipsnap_csrf")
+        userid = getAuthenticatedUser(csrf, snipsnap_jwt)
 
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
@@ -195,8 +195,8 @@ async def getCollections(request: Request, snipsnap_jwt: str = Cookie(None), ses
 @get_router.get("/getCollectionSnips/{collId}", response_model=List[SnipsResponse])
 async def getCollectionSnips(request: Request, collId: int, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)) -> List[SnipsResponse]:
     try:
-        csfr = request.headers.get("snipsnap_csfr")
-        userid = getAuthenticatedUser(csfr, snipsnap_jwt)
+        csrf = request.headers.get("snipsnap_csrf")
+        userid = getAuthenticatedUser(csrf, snipsnap_jwt)
 
         if (userid <= -1):
             raise HTTPException(401, "Unauthorized")
