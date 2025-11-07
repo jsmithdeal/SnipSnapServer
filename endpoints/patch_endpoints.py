@@ -47,7 +47,7 @@ async def editSnip(request: Request, snip: SaveSnipRequest, snipsnap_jwt: str = 
         collection = session.exec(select(Collection.collectionid).where((Collection.userid == userid) & (Collection.collectionid == snip.collectionid))).first()
 
         if (snip.collectionid is not None and collection is None):
-            raise HTTPException(500, "Unable to create snip")
+            raise HTTPException(500, "Unable to edit snip")
         
         updateResult = session.exec(update(Snip).where((Snip.userid == userid) & (Snip.snipid == snip.snipid)).values(
             userid=userid,

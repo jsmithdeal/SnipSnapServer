@@ -11,7 +11,7 @@ app = FastAPI()
 
 #for debugging
 origins = [
-    "https://app.piofthesky.org"
+    "https://app.snip-snap.org"
 ]
 
 app.add_middleware(
