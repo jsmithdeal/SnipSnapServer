@@ -9,7 +9,6 @@ from endpoints.patch_endpoints import patch_router
 
 app = FastAPI()
 
-#for debugging
 origins = [
     "http://192.168.0.74:5173",
     "http://localhost:5173" 
