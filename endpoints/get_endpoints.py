@@ -73,6 +73,8 @@ async def getSnipInit(request: Request, snipsnap_jwt: str = Cookie(None), sessio
 @get_router.get('/getSnipDetails/{snipId}', response_model=SnipDetailsResponse)
 async def getSnipDetails(request: Request, snipId: int, snipsnap_jwt: str = Cookie(None), session: Session = Depends(get_session)) -> SnipDetailsResponse:
     try:
+        sharedSnip: bool = False
+
         csrf = request.headers.get("snipsnap_csrf")
         userid = getAuthenticatedUser(csrf, snipsnap_jwt)
 
@@ -80,12 +82,20 @@ async def getSnipDetails(request: Request, snipId: int, snipsnap_jwt: str = Cook
             raise HTTPException(401, "Unauthorized")
         
         snipDetails = session.exec(select(Snip)
-                                .where((Snip.userid == userid) & (Snip.snipid == snipId))
+                                .where(Snip.snipid == snipId)
                                 .options(
                                     selectinload(Snip.sharedwith),
                                     selectinload(Snip.user).selectinload(User.collections),
                                     selectinload(Snip.user).selectinload(User.contacts) #selectinload gets attributes for this snip and user as defined in db model relationships
                                 )).first()
+
+        if (snipDetails.userid != userid):
+            shared = session.exec(select(Shared).where((Shared.contactid == userid) & (Shared.snipid == snipDetails.snipid))).first()
+
+            if (shared is None):
+                raise HTTPException(401, "Unauthorized")
+            else:
+                sharedSnip = True
 
         return SnipDetailsResponse(
             snipid=snipDetails.snipid,
@@ -96,9 +106,9 @@ async def getSnipDetails(request: Request, snipId: int, snipsnap_jwt: str = Cook
             collectionid=snipDetails.collectionid,
             lastmodified=snipDetails.lastmodified,
             snipshared=(True if len(snipDetails.sharedwith) > 0 else False),
-            collections=snipDetails.user.collections,
-            contacts=snipDetails.user.contacts,
-            sharedwith=[c.contactid for c in snipDetails.sharedwith]
+            collections=(snipDetails.user.collections if not sharedSnip else []),
+            contacts=(snipDetails.user.contacts if not sharedSnip else []),
+            sharedwith=([c.contactid for c in snipDetails.sharedwith] if not sharedSnip else [])
         )
     except HTTPException as e:
         raise

@@ -9,7 +9,6 @@ from endpoints.patch_endpoints import patch_router
 
 app = FastAPI()
 
-#for debugging
 origins = [
     "https://app.snip-snap.org"
 ]
